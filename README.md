@@ -11,3 +11,8 @@ cargo run
 + After that, you can start navigating the website by going to [http://localhost:8000/feed](http://localhost:8000/feed)
 
 + Known limitation: comments can be made without having to register
+
++ run tests:
+```sh
+cargo test -p social-store
+```

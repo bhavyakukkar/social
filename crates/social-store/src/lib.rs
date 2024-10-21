@@ -172,44 +172,90 @@ impl State {
 mod tests {
     use super::*;
 
-    // #[test]
-    // fn register_user() -> Result<(), anyhow::Error> {
-    //     let mut state = State::new();
+    #[test]
+    fn full() -> Result<(), anyhow::Error> {
+        let mut state = State::new();
 
-    //     // register a user
-    //     state.register_user("bhavyakukkar")?;
-    //     assert_eq!(
-    //         state.users.clone(),
-    //         HashSet::from(["bhavyakukkar".to_string()])
-    //     );
+        // no posts have been created
+        assert_eq!(state.posts.len(), 0, "");
 
-    //     // register another user
-    //     state.register_user("johndoe")?;
-    //     assert_eq!(
-    //         state.users.clone(),
-    //         HashSet::from(["bhavyakukkar".to_string(), "johndoe".to_string()])
-    //     );
+        // register a user
+        state.register_user("bhavyakukkar")?;
 
-    //     // registering existing user should fail
-    //     assert!(state.register_user("bhavyakukkar").is_err());
+        // attempt to register with existing username (must fail)
+        assert!(state.register_user("bhavyakukkar").is_err());
 
-    //     // no posts have been created
-    //     assert_eq!(state.posts.len(), 0, "");
-    //     Ok(())
-    // }
+        // register another user
+        state.register_user("johndoe")?;
 
-    // #[test]
-    // fn create_post() -> Result<(), anyhow::Error> {
-    //     let mut state = State::new();
+        // make bhavyakukkar create a new post
+        let post_id = state.create_post("bhavyakukkar", "This is my first post".to_string())?;
 
-    //     // register a user
-    //     state.register_user("bhavyakukkar")?;
+        {
+            // there is now 1 post
+            let posts = state.posts().collect::<Vec<_>>();
+            assert!(posts.len() == 1);
+            let post_id = *posts.get(0).ok_or(anyhow!("there are no posts"))?.1;
+            let post = state
+                .get_post_mut(&post_id)
+                .ok_or(anyhow!("post not found"))?;
 
-    //     // create a new post
-    //     state.create_post("bhavyakukkar", "This is my first post")?;
+            // post content should match
+            assert_eq!(post.content, "This is my first post".to_string());
 
-    //     assert!(state.posts.len(), 1);
-    //     assert_eq!(state.posts.get("bhavyakukkar")?, HashMap::from(([])));
-    //     Ok(())
-    // }
+            // make johndoe like the post
+            post.like("johndoe");
+
+            // likers should only be johndoe
+            let likers: Vec<&String> = post.likers().collect();
+            assert_eq!(likers, vec!["johndoe"]);
+
+            // there should be no dislikers
+            let dislikers: Vec<&String> = post.dislikers().collect();
+            assert_eq!(dislikers, Vec::<&String>::new());
+
+            // make johndoe disliked the post
+            post.dislike("johndoe");
+
+            // there should be no likers
+            let likers: Vec<&String> = post.likers().collect();
+            assert_eq!(likers, Vec::<&String>::new());
+
+            // dislikers should only be johndoe
+            let dislikers: Vec<&String> = post.dislikers().collect();
+            assert_eq!(dislikers, vec!["johndoe"]);
+
+            // make johndoe make a comment on the post
+            post.add_comment("johndoe", "Nice Post!".to_string());
+
+            // there should be a single comment made by johndoe
+            let comments: HashSet<(&String, &String)> = post.comments().collect();
+            assert_eq!(
+                comments,
+                HashSet::from([(&"johndoe".to_string(), &"Nice Post!".to_string())])
+            );
+
+            // make johndoe make another comment on the post
+            post.add_comment("johndoe", "Reading this again...".to_string());
+
+            // there should now be two comments made by johndoe
+            let comments: HashSet<(&String, &String)> = post.comments().collect();
+            assert_eq!(
+                comments,
+                HashSet::from([
+                    (&"johndoe".to_string(), &"Nice Post!".to_string()),
+                    (&"johndoe".to_string(), &"Reading this again...".to_string())
+                ])
+            );
+        }
+
+        // try creating comment from state rather than post
+        // this is bhavyakukkar's comment on his own post
+        state.create_comment(
+            post_id,
+            "bhavyakukkar",
+            "Glad to hear that @johndoe".to_string(),
+        )?;
+        Ok(())
+    }
 }
