@@ -109,8 +109,9 @@ impl State {
         }
     }
 
-    /// Make the supplied username create a new post with the supplied text content
-    pub fn create_post(&mut self, username: &str, content: String) -> Result<(), anyhow::Error> {
+    /// Make the supplied username create a new post with the supplied text content, returning the
+    /// id of the newly created post
+    pub fn create_post(&mut self, username: &str, content: String) -> Result<u64, anyhow::Error> {
         use std::hash::Hash;
 
         let user_posts = self
@@ -129,7 +130,7 @@ impl State {
 
         // insert new post's id to user's posts
         user_posts.insert(post_id);
-        Ok(())
+        Ok(post_id)
     }
 
     /// Make the supplied username create a new comment under the supplied post (identified by its
@@ -148,9 +149,14 @@ impl State {
         Ok(())
     }
 
-    /// Get the post identified by the supplied post-id, if it exists
+    /// Get an immutable reference to the post identified by the supplied post-id, if it exists
     pub fn get_post(&self, post_id: &u64) -> Option<&Post> {
         self.posts.get(post_id)
+    }
+
+    /// Get a mutable reference to the post identified by the supplied post-id, if it exists
+    pub fn get_post_mut(&mut self, post_id: &u64) -> Option<&mut Post> {
+        self.posts.get_mut(post_id)
     }
 
     /// Return an iterator over all posts on the platform (identified by their post-ids) along with
