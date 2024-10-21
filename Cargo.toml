@@ -1,6 +1,10 @@
-[package]
-name = "social-media-platform-demo"
+[workspace]
+members = [ "crates/social-serve","crates/social-store"]
+resolver = "2"
+
+[workspace.package]
+authors = ["Bhavya Kukkar <bhavyakukkar@gmail.com>"]
+description = "A demo social-media application"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]

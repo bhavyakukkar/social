@@ -1,0 +1,8 @@
+[package]
+name = "social-store"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { version = "1.0.90", features = ["backtrace"] }
+chrono = "0.4.38"
